@@ -3,13 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { RakumonOwlLogo } from "@/components/rakumon-owl-logo";
+import { RakumonLogo } from "@/components/rakumon-logo";
 
 
 function Icon({ children }: { children: string }) { return <span aria-hidden="true" className="inline-flex text-base leading-none">{children}</span>; }
 
 const settings = {
-  Category: ["Owl Diary", "Study Tips", "塾運営ノート", "Owl Motivation", "受験リアル"],
+  Category: ["Brand Diary", "Study Tips", "塾運営ノート", "Brand Motivation", "受験リアル"],
   Platform: ["Instagram", "X", "TikTok"],
   "Main IP": ["Mori", "Sen", "Raku", "Gumi", "Yosi"],
   "Target Audience": ["生徒", "保護者", "塾長", "教育関係者"],
@@ -23,14 +23,14 @@ const generated = [
   ["X Post", "合格に近づく生徒ほど、派手な努力より“続けられる仕組み”を持っています。今日の5分を一緒に設計しましょう。#Rakumon"],
   ["Hashtags", "#受験勉強 #学習習慣 #塾運営 #教育DX #Rakumon"],
   ["Image Generation Prompt", "Clean Japanese education SaaS visual, warm desk light, notebooks, soft mint and ivory palette, Apple-like minimal composition"],
-  ["Recommended IP Action", "ブランドマークは公式Rakumon owlのみを使用し、投稿ビジュアルは教材・ノート・タイマー中心で構成"]
+  ["Recommended IP Action", "ブランドマークは公式Rakumonロゴのみを使用し、投稿ビジュアルは教材・ノート・タイマー中心で構成"]
 ];
 
 const rows = [
   { title: "保護者向け学習習慣カルーセル", platform: "Instagram", ip: "Raku", status: "Draft", date: "6/22" },
   { title: "塾長向け導入事例スレッド", platform: "X", ip: "Mori", status: "Image Ready", date: "6/23" },
   { title: "受験リアル：朝学習ルーティン", platform: "TikTok", ip: "Sen", status: "Scheduled", date: "6/24" },
-  { title: "Owl Diary 月曜の一言", platform: "Instagram", ip: "Gumi", status: "Idea", date: "6/25" }
+  { title: "Brand Diary 月曜の一言", platform: "Instagram", ip: "Gumi", status: "Idea", date: "6/25" }
 ];
 const statuses = ["Idea", "Draft", "Image Ready", "Scheduled", "Posted"];
 const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -42,7 +42,7 @@ function SelectLike({ label, values }: { label: string; values: string[] }) {
 export default function Home() {
   return <main className="mx-auto min-h-screen max-w-[1600px] px-5 py-6 lg:px-8">
     <header className="mb-6 flex flex-col gap-4 rounded-[2rem] border border-white/70 bg-white/70 p-5 shadow-soft backdrop-blur-xl md:flex-row md:items-center md:justify-between">
-      <div className="flex items-center gap-4"><RakumonOwlLogo /><div><Badge className="bg-teal-50 text-teal-700">Rakumon Marketing Operations</Badge><h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">Rakumon SNS Studio</h1><p className="text-sm text-slate-500">AI-powered SNS content generation and management platform.</p></div></div>
+      <div className="flex items-center gap-4"><RakumonLogo /><div><Badge className="bg-teal-50 text-teal-700">Rakumon Marketing Operations</Badge><h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">Rakumon SNS Studio</h1><p className="text-sm text-slate-500">AI-powered SNS content generation and management platform.</p></div></div>
       <div className="flex gap-3"><Button variant="secondary"><Icon>📊</Icon> Analytics</Button><Button><Icon>✨</Icon> Generate Content</Button></div>
     </header>
 
