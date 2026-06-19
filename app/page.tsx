@@ -13,15 +13,25 @@ function Icon({ children }: { children: string }) {
   return <span aria-hidden="true" className="inline-flex text-base leading-none">{children}</span>;
 }
 
-const draftStorageKey = "rakumon-sns-studio-daily-draft";
-const draftsStorageKey = "rakumon-sns-studio-saved-drafts";
+const currentDraftStorageKey = "rakumon-sns-studio-current-draft-v2";
+const archiveStorageKey = "rakumon-sns-studio-record-archive-v2";
+const legacyDraftStorageKey = "rakumon-sns-studio-daily-draft";
+const legacyDraftsStorageKey = "rakumon-sns-studio-saved-drafts";
+
+const statusOptions = ["Idea", "Draft", "Image Ready", "Scheduled", "Posted"] as const;
+type PostStatus = (typeof statusOptions)[number];
+type DateFilter = "This Week" | "This Month" | "All";
 
 type DraftForm = {
-  theme: string;
+  id: string;
+  postDate: string;
+  platform: string;
   category: string;
-  audience: string;
+  theme: string;
+  mainIp: string;
+  targetAudience: string;
   objective: string;
-  draft: string;
+  status: PostStatus;
 };
 
 type GeneratedContent = {
@@ -30,42 +40,78 @@ type GeneratedContent = {
   instagramCaption: string;
   xPost: string;
   hashtags: string;
+  imagePrompt: string;
+  recommendedIpAction: string;
 };
 
-type SavedDraft = DraftForm & { generated: GeneratedContent; savedAt: string };
+type ContentRecord = DraftForm & GeneratedContent & { createdAt: string; title: string };
+
+type LegacyDraft = {
+  theme?: string;
+  category?: string;
+  audience?: string;
+  objective?: string;
+  generated?: Partial<GeneratedContent>;
+  savedAt?: string;
+};
+
+const todayIso = () => new Date().toISOString().slice(0, 10);
+const createRecordId = () => `post-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
 const emptyGenerated: GeneratedContent = {
   imageTitle: "",
   imageSubtitle: "",
   instagramCaption: "",
   xPost: "",
-  hashtags: ""
+  hashtags: "",
+  imagePrompt: "",
+  recommendedIpAction: ""
 };
 
-const defaultDraft: SavedDraft = {
-  savedAt: "",
-  theme: "定期テスト前の5分スタート",
+function createEmptyForm(): DraftForm {
+  return {
+    id: createRecordId(),
+    postDate: todayIso(),
+    platform: "Instagram",
+    category: "Study Tips",
+    theme: "",
+    mainIp: "Rakumon",
+    targetAudience: "生徒",
+    objective: "学習を始めるきっかけを作る",
+    status: "Idea"
+  };
+}
+
+const defaultForm: DraftForm = {
+  id: createRecordId(),
+  postDate: todayIso(),
+  platform: "Instagram",
   category: "Study Tips",
-  audience: "生徒",
+  theme: "定期テスト前の5分スタート",
+  mainIp: "Rakumon",
+  targetAudience: "生徒",
   objective: "勉強開始の心理的ハードルを下げる",
-  draft: "定期テスト前、なかなか机に向かえない生徒へ。小さな開始ハードルを下げる投稿。",
-  generated: {
-    imageTitle: "今日の小さな積み上げが、春の合格をつくる",
-    imageSubtitle: "5分だけ机に向かう習慣づくり",
-    instagramCaption: "最初から完璧に集中しようとしなくても大丈夫。まずは5分だけ、机に向かう約束をしてみよう。小さな一歩が、明日の自信につながります。",
-    xPost: "勉強は「やる気が出たら始める」より「5分だけ始める」が強い。小さく始めるほど、続ける自分を作りやすい。",
-    hashtags: "#ラクモン #勉強垢 #学習習慣 #定期テスト #StudyTips"
-  }
+  status: "Draft"
+};
+
+const defaultGenerated: GeneratedContent = {
+  imageTitle: "今日の小さな積み上げが、春の合格をつくる",
+  imageSubtitle: "5分だけ机に向かう習慣づくり",
+  instagramCaption: "最初から完璧に集中しようとしなくても大丈夫。まずは5分だけ、机に向かう約束をしてみよう。小さな一歩が、明日の自信につながります。",
+  xPost: "勉強は「やる気が出たら始める」より「5分だけ始める」が強い。小さく始めるほど、続ける自分を作りやすい。",
+  hashtags: "#ラクモン #勉強垢 #学習習慣 #定期テスト #StudyTips",
+  imagePrompt: "Emerald and slate educational carousel cover with a friendly owl motif, a student desk, soft morning light, and clear Japanese headline space.",
+  recommendedIpAction: "Use Rakumon owl mascot and learning habit language; avoid implying guaranteed score improvement."
 };
 
 const quickTemplates = [
-  { name: "Study Tips", tone: "すぐ試せる", theme: "5分だけ始める勉強法", category: "Study Tips", audience: "生徒", objective: "今日の勉強を始めやすくする", prompt: "今日の勉強を始めやすくする、小さな学習Tipsを1つ紹介する。" },
-  { name: "質問力", tone: "思考を深める", theme: "よい質問を作る3つの型", category: "質問力", audience: "生徒", objective: "わからないことを整理して質問できるようにする", prompt: "生徒がよい質問を作るための問いかけ例を紹介する。" },
-  { name: "受験リアル", tone: "共感", theme: "受験期の不安との向き合い方", category: "受験リアル", audience: "生徒", objective: "不安を抱える受験生を励ます", prompt: "受験期にありがちな不安と、その向き合い方を等身大に書く。" },
-  { name: "保護者向け", tone: "安心", theme: "子どもを見守る声かけ", category: "保護者向け", audience: "保護者", objective: "家庭での前向きなサポートを提案する", prompt: "保護者が子どもを見守るときの声かけをやさしく提案する。" },
-  { name: "塾運営ノート", tone: "実務", theme: "面談前チェックリスト", category: "塾運営ノート", audience: "塾長", objective: "塾の現場で使える改善メモを共有する", prompt: "塾の現場で使える運営改善メモを短くまとめる。" },
-  { name: "AI時代", tone: "未来志向", theme: "AI時代に伸ばしたい自学力", category: "AI時代", audience: "教育関係者", objective: "AI活用と自分で考える力の両立を伝える", prompt: "AI時代の学び方と、人が伸ばすべき力について投稿する。" },
-  { name: "Owl Motivation", tone: "励まし", theme: "今日もう一歩進むための言葉", category: "Owl Motivation", audience: "生徒", objective: "学習を続ける勇気を届ける", prompt: "Owlの視点で、今日もう一歩進むための短い応援文を書く。" }
+  { name: "Study Tips", tone: "すぐ試せる", theme: "5分だけ始める勉強法", category: "Study Tips", platform: "Instagram", audience: "生徒", objective: "今日の勉強を始めやすくする", mainIp: "Rakumon Study Habit", prompt: "今日の勉強を始めやすくする、小さな学習Tipsを1つ紹介する。" },
+  { name: "質問力", tone: "思考を深める", theme: "よい質問を作る3つの型", category: "質問力", platform: "X", audience: "生徒", objective: "わからないことを整理して質問できるようにする", mainIp: "Rakumon Q&A", prompt: "生徒がよい質問を作るための問いかけ例を紹介する。" },
+  { name: "受験リアル", tone: "共感", theme: "受験期の不安との向き合い方", category: "受験リアル", platform: "Instagram", audience: "生徒", objective: "不安を抱える受験生を励ます", mainIp: "Owl Motivation", prompt: "受験期にありがちな不安と、その向き合い方を等身大に書く。" },
+  { name: "保護者向け", tone: "安心", theme: "子どもを見守る声かけ", category: "保護者向け", platform: "Instagram", audience: "保護者", objective: "家庭での前向きなサポートを提案する", mainIp: "Rakumon Family", prompt: "保護者が子どもを見守るときの声かけをやさしく提案する。" },
+  { name: "塾運営ノート", tone: "実務", theme: "面談前チェックリスト", category: "塾運営ノート", platform: "X", audience: "塾長", objective: "塾の現場で使える改善メモを共有する", mainIp: "Rakumon School Ops", prompt: "塾の現場で使える運営改善メモを短くまとめる。" },
+  { name: "AI時代", tone: "未来志向", theme: "AI時代に伸ばしたい自学力", category: "AI時代", platform: "TikTok", audience: "教育関係者", objective: "AI活用と自分で考える力の両立を伝える", mainIp: "Rakumon Future Learning", prompt: "AI時代の学び方と、人が伸ばすべき力について投稿する。" },
+  { name: "Owl Motivation", tone: "励まし", theme: "今日もう一歩進むための言葉", category: "Owl Motivation", platform: "Instagram", audience: "生徒", objective: "学習を続ける勇気を届ける", mainIp: "Rakumon Owl", prompt: "Owlの視点で、今日もう一歩進むための短い応援文を書く。" }
 ];
 
 const themeLibrary = [
@@ -77,118 +123,187 @@ const themeLibrary = [
   { title: "今週の小さな勝ち", platform: "Instagram", format: "Story", audience: "生徒", idea: "達成を言語化して継続につなげる" }
 ];
 
-const kanbanColumns = [
-  { title: "Ideas", items: [{ title: "AI時代のノート術", meta: "TikTok · 教育関係者" }, { title: "質問力を育てる一言", meta: "X · 生徒" }] },
-  { title: "Drafts", items: [{ title: "保護者向け声かけ集", meta: "Instagram · 保護者" }, { title: "受験リアル：眠れない夜", meta: "Instagram · 生徒" }] },
-  { title: "Ready", items: [{ title: "5分スタート Study Tips", meta: "Carousel · 6/22" }] },
-  { title: "Posted", items: [{ title: "塾運営ノート：面談ログ", meta: "X · 6/18" }] }
-];
-
 const weekPlan = ["質問力", "Study Tips", "保護者向け", "AI時代", "受験リアル", "Owl Motivation", "塾運営ノート"];
 
-function generateMockContent({ theme, category, audience, objective }: DraftForm): GeneratedContent {
+function generateMockContent({ theme, category, platform, targetAudience, objective, mainIp }: DraftForm): GeneratedContent {
   const topic = theme.trim() || "今日の学び";
-  const target = audience.trim() || "フォロワー";
+  const target = targetAudience.trim() || "フォロワー";
   const goal = objective.trim() || "次の一歩を踏み出す";
-  const tagBase = (category || topic).replace(/\s+/g, "");
+  const channel = platform.trim() || "SNS";
+  const ip = mainIp.trim() || "Rakumon";
+  const tagBase = (category || topic).replace(/[\s#.,/\\]+/g, "");
 
   return {
     imageTitle: `${topic}を味方にする`,
-    imageSubtitle: `${target}へ届けたい、今日からできる小さな一歩`,
-    instagramCaption: `【${topic}】\n\n${target}に伝えたいのは、完璧な準備よりも「まず動ける形」を作ること。\n\n今日のポイントは、${goal}ために行動をひとつだけ小さくすることです。迷ったら、できたことを1行で書き出してみてください。\n\n保存して、次の学習前に見返してみましょう。`,
-    xPost: `${topic}は、いきなり大きく変えようとしなくてOK。${target}が${goal}には、今日できる一歩を具体的に決めることが大切。小さく始めて、続けられる自分を作ろう。`,
-    hashtags: `#ラクモン #Rakumon #${tagBase} #学習習慣 #SNS投稿`
+    imageSubtitle: `${target}へ届けたい、${channel}で伝わる小さな一歩`,
+    instagramCaption: `【${topic}】\n\n${target}に伝えたいのは、完璧な準備よりも「まず動ける形」を作ること。\n\n${goal}ために、今日できる行動をひとつだけ小さくしてみましょう。\n\n${ip}の視点で、迷ったときに見返せる保存版として届けます。`,
+    xPost: `${topic}は、大きく変えようとしなくてOK。${target}が${goal}には、今日できる一歩を具体的に決めることが大切。${ip}らしく、小さく始めて続けられる形へ。`,
+    hashtags: `#ラクモン #Rakumon #${tagBase || "学習"} #${channel.replace(/\s+/g, "")} #SNS投稿`,
+    imagePrompt: `${channel} post visual about "${topic}" for ${target}. Use emerald, slate, and warm white colors, friendly owl-inspired education branding, clean Japanese headline space, and an encouraging modern study atmosphere.`,
+    recommendedIpAction: `${ip}のブランド要素を使い、${category || "教育"}領域の専門性を示す。成果保証・過度な断定は避け、${target}が実行できる表現に調整する。`
   };
 }
 
+function toRecord(form: DraftForm, generated: GeneratedContent, existingCreatedAt?: string): ContentRecord {
+  return { ...form, ...generated, title: generated.imageTitle || form.theme || "Untitled post", createdAt: existingCreatedAt ?? new Date().toISOString() };
+}
+
+function getWeekStart(date: Date) {
+  const copy = new Date(date);
+  const day = copy.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  copy.setDate(copy.getDate() + diff);
+  copy.setHours(0, 0, 0, 0);
+  return copy;
+}
+
+function isInFilter(postDate: string, filter: DateFilter) {
+  if (filter === "All") return true;
+  const date = new Date(`${postDate}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return false;
+  const now = new Date();
+  if (filter === "This Month") return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth();
+  const start = getWeekStart(now);
+  const end = new Date(start);
+  end.setDate(start.getDate() + 7);
+  return date >= start && date < end;
+}
+
 export default function Home() {
-  const [form, setForm] = useState<DraftForm>({ theme: defaultDraft.theme, category: defaultDraft.category, audience: defaultDraft.audience, objective: defaultDraft.objective, draft: defaultDraft.draft });
-  const [generated, setGenerated] = useState<GeneratedContent>(defaultDraft.generated);
-  const [savedAt, setSavedAt] = useState("");
-  const [savedDrafts, setSavedDrafts] = useState<SavedDraft[]>([]);
+  const [form, setForm] = useState<DraftForm>(defaultForm);
+  const [generated, setGenerated] = useState<GeneratedContent>(defaultGenerated);
+  const [records, setRecords] = useState<ContentRecord[]>([]);
   const [statusMessage, setStatusMessage] = useState("");
+  const [activeFilter, setActiveFilter] = useState<DateFilter>("This Week");
 
   useEffect(() => {
-    const savedDraft = window.localStorage.getItem(draftStorageKey);
-    if (savedDraft) {
+    const savedCurrent = window.localStorage.getItem(currentDraftStorageKey);
+    if (savedCurrent) {
       try {
-        const parsed = JSON.parse(savedDraft) as Partial<SavedDraft>;
-        setForm({
-          theme: parsed.theme ?? defaultDraft.theme,
-          category: parsed.category ?? defaultDraft.category,
-          audience: parsed.audience ?? defaultDraft.audience,
-          objective: parsed.objective ?? defaultDraft.objective,
-          draft: parsed.draft ?? defaultDraft.draft
-        });
-        setGenerated(parsed.generated ?? defaultDraft.generated);
+        const parsed = JSON.parse(savedCurrent) as { form?: DraftForm; generated?: GeneratedContent };
+        if (parsed.form) setForm({ ...createEmptyForm(), ...parsed.form, postDate: parsed.form.postDate || todayIso() });
+        if (parsed.generated) setGenerated({ ...emptyGenerated, ...parsed.generated });
       } catch {
-        setForm((current) => ({ ...current, draft: savedDraft }));
+        setStatusMessage("Could not load the last draft");
       }
     }
 
-    const savedDraftList = window.localStorage.getItem(draftsStorageKey);
-    if (!savedDraftList) return;
+    const savedArchive = window.localStorage.getItem(archiveStorageKey);
+    if (savedArchive) {
+      try {
+        const parsedRecords = JSON.parse(savedArchive) as ContentRecord[];
+        if (Array.isArray(parsedRecords)) setRecords(parsedRecords);
+        return;
+      } catch {
+        setRecords([]);
+      }
+    }
+
+    const legacyDraftList = window.localStorage.getItem(legacyDraftsStorageKey);
+    const legacySingleDraft = window.localStorage.getItem(legacyDraftStorageKey);
+    const legacySource = legacyDraftList ?? (legacySingleDraft ? `[${legacySingleDraft}]` : "");
+    if (!legacySource) return;
 
     try {
-      const parsedDrafts = JSON.parse(savedDraftList) as SavedDraft[];
-      if (Array.isArray(parsedDrafts)) {
-        setSavedDrafts(parsedDrafts);
-      }
+      const legacyRecords = (JSON.parse(legacySource) as LegacyDraft[]).map((legacy) => {
+        const legacyForm: DraftForm = {
+          ...createEmptyForm(),
+          theme: legacy.theme ?? "",
+          category: legacy.category ?? "Study Tips",
+          targetAudience: legacy.audience ?? "生徒",
+          objective: legacy.objective ?? "学習を始めるきっかけを作る",
+          status: "Draft"
+        };
+        const legacyGenerated = { ...emptyGenerated, ...legacy.generated };
+        return toRecord(legacyForm, legacyGenerated, legacy.savedAt ? new Date().toISOString() : undefined);
+      });
+      setRecords(legacyRecords);
+      window.localStorage.setItem(archiveStorageKey, JSON.stringify(legacyRecords));
     } catch {
-      setSavedDrafts([]);
+      setRecords([]);
     }
   }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem(currentDraftStorageKey, JSON.stringify({ form, generated }));
+  }, [form, generated]);
 
   const selectedTemplate = useMemo(
     () => quickTemplates.find((template) => form.category === template.category) ?? quickTemplates[0],
     [form.category]
   );
 
-  function updateField(field: keyof DraftForm, value: string) {
+  const filteredRecords = useMemo(
+    () => records.filter((record) => isInFilter(record.postDate, activeFilter)),
+    [records, activeFilter]
+  );
+
+  function updateField<K extends keyof DraftForm>(field: K, value: DraftForm[K]) {
     setForm((current) => ({ ...current, [field]: value }));
   }
 
   function useTemplate(template: (typeof quickTemplates)[number]) {
-    const nextForm = {
+    const nextForm: DraftForm = {
+      ...form,
+      platform: template.platform,
       theme: template.theme,
       category: template.category,
-      audience: template.audience,
+      targetAudience: template.audience,
       objective: template.objective,
-      draft: `${template.name}: ${template.prompt}`
+      mainIp: template.mainIp,
+      status: "Idea"
     };
     setForm(nextForm);
     setGenerated(generateMockContent(nextForm));
-    setSavedAt("");
-    setStatusMessage("Template selected");
+    setStatusMessage(`${template.name} template selected`);
   }
 
   function generateContent() {
     setGenerated(generateMockContent(form));
-    setStatusMessage("Content generated");
+    setStatusMessage("Content generated from the current theme, category, platform, audience, and objective");
   }
 
   function saveDraft() {
-    const timestamp = new Intl.DateTimeFormat("ja-JP", {
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit"
-    }).format(new Date());
-    const nextDraft: SavedDraft = { ...form, generated, savedAt: timestamp };
-    const nextDrafts = [nextDraft, ...savedDrafts];
+    const existing = records.find((record) => record.id === form.id);
+    const nextRecord = toRecord(form, generated, existing?.createdAt);
+    const nextRecords = existing
+      ? records.map((record) => (record.id === nextRecord.id ? nextRecord : record))
+      : [nextRecord, ...records];
 
-    window.localStorage.setItem(draftStorageKey, JSON.stringify(nextDraft));
-    window.localStorage.setItem(draftsStorageKey, JSON.stringify(nextDrafts));
-    setSavedDrafts(nextDrafts);
-    setSavedAt(timestamp);
-    setStatusMessage("Draft saved");
+    setRecords(nextRecords);
+    window.localStorage.setItem(archiveStorageKey, JSON.stringify(nextRecords));
+    window.localStorage.setItem(currentDraftStorageKey, JSON.stringify({ form, generated }));
+    setStatusMessage("Draft saved to the content archive");
+  }
+
+  function loadRecord(record: ContentRecord) {
+    setForm({
+      id: record.id,
+      postDate: record.postDate,
+      platform: record.platform,
+      category: record.category,
+      theme: record.theme,
+      mainIp: record.mainIp,
+      targetAudience: record.targetAudience,
+      objective: record.objective,
+      status: record.status
+    });
+    setGenerated({
+      imageTitle: record.imageTitle,
+      imageSubtitle: record.imageSubtitle,
+      instagramCaption: record.instagramCaption,
+      xPost: record.xPost,
+      hashtags: record.hashtags,
+      imagePrompt: record.imagePrompt,
+      recommendedIpAction: record.recommendedIpAction
+    });
+    setStatusMessage(`Loaded "${record.title}" into the editor`);
   }
 
   function startNewPost() {
-    setForm({ theme: "", category: "", audience: "", objective: "", draft: "" });
+    setForm(createEmptyForm());
     setGenerated(emptyGenerated);
-    setSavedAt("");
-    window.localStorage.removeItem(draftStorageKey);
+    window.localStorage.removeItem(currentDraftStorageKey);
     setStatusMessage("New post started");
   }
 
@@ -198,9 +313,9 @@ export default function Home() {
         <div className="flex items-center gap-4">
           <RakumonLogo />
           <div>
-            <Badge className="bg-emerald-50 text-emerald-700">Daily Content Workspace</Badge>
+            <Badge className="bg-emerald-50 text-emerald-700">Content Creation Workspace</Badge>
             <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">Rakumon SNS Studio</h1>
-            <p className="text-sm text-slate-500">Notionのように書き、Bufferのように整え、Trelloのように進める投稿制作スペース。</p>
+            <p className="text-sm text-slate-500">Content ArchiveとSNS Review Toolを兼ねた投稿制作スペース。</p>
           </div>
         </div>
         <div className="flex gap-3"><Button variant="secondary" onClick={saveDraft}><Icon>💾</Icon> Save Draft</Button><Button onClick={startNewPost}><Icon>✍️</Icon> New Post</Button></div>
@@ -215,20 +330,19 @@ export default function Home() {
         </aside>
 
         <section className="space-y-5">
-          <Card><CardHeader className="flex-row items-start justify-between gap-4"><div><CardTitle>Writing Desk</CardTitle><CardDescription>入力したテーマをもとにモック投稿案を生成できます。</CardDescription></div>{savedAt && <Badge className="bg-emerald-50 text-emerald-700">Saved {savedAt}</Badge>}</CardHeader><CardContent className="space-y-4"><div className="rounded-[1.75rem] border border-slate-200 bg-slate-50/80 p-4"><div className="grid gap-3 md:grid-cols-2"><div className="md:col-span-2"><Label htmlFor="theme" className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Theme</Label><Input id="theme" className="mt-2" value={form.theme} onChange={(event) => updateField("theme", event.target.value)} placeholder="例: 5分だけ始める勉強法" /></div><div><Label htmlFor="category" className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Category</Label><Input id="category" className="mt-2" value={form.category} onChange={(event) => updateField("category", event.target.value)} placeholder="Study Tips" /></div><div><Label htmlFor="audience" className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Audience</Label><Input id="audience" className="mt-2" value={form.audience} onChange={(event) => updateField("audience", event.target.value)} placeholder="生徒 / 保護者 / 塾長" /></div><div className="md:col-span-2"><Label htmlFor="objective" className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Objective</Label><Input id="objective" className="mt-2" value={form.objective} onChange={(event) => updateField("objective", event.target.value)} placeholder="投稿で達成したいこと" /></div></div><Label htmlFor="draft" className="mt-4 block text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Draft Canvas</Label><Textarea id="draft" className="mt-3 min-h-44 border-0 bg-white text-base leading-7 shadow-inner" value={form.draft} onChange={(event) => updateField("draft", event.target.value)} /><div className="mt-3 flex flex-wrap gap-2"><Button onClick={generateContent}><Icon>✨</Icon> Generate</Button><Button variant="secondary" onClick={saveDraft}><Icon>💾</Icon> Save Draft</Button></div></div><div className="overflow-hidden rounded-[1.5rem] bg-gradient-to-br from-slate-950 via-slate-800 to-emerald-900 p-6 text-white"><div className="mb-16 flex items-center justify-between"><Badge className="bg-white/15 text-white">Instagram Carousel</Badge><RakumonLogo className="h-10 w-10" /></div><h2 className="max-w-md text-4xl font-bold leading-tight">{generated.imageTitle || "Generateで画像タイトルを作成"}</h2><p className="mt-4 text-white/72">{generated.imageSubtitle || "テーマを入力して投稿案を生成しましょう"}</p></div></CardContent></Card>
+          <Card><CardHeader><CardTitle>Writing Desk</CardTitle><CardDescription>Theme、Category、Platform、Audience、Objectiveから投稿案を生成します。</CardDescription></CardHeader><CardContent className="space-y-4"><div className="rounded-[1.75rem] border border-slate-200 bg-slate-50/80 p-4"><div className="grid gap-3 md:grid-cols-2"><div className="md:col-span-2"><Label htmlFor="theme" className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Theme</Label><Input id="theme" className="mt-2" value={form.theme} onChange={(event) => updateField("theme", event.target.value)} placeholder="例: 5分だけ始める勉強法" /></div><div><Label htmlFor="postDate" className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Post Date</Label><Input id="postDate" type="date" className="mt-2" value={form.postDate} onChange={(event) => updateField("postDate", event.target.value)} /></div><div><Label htmlFor="platform" className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Platform</Label><Input id="platform" className="mt-2" value={form.platform} onChange={(event) => updateField("platform", event.target.value)} placeholder="Instagram / X / TikTok" /></div><div><Label htmlFor="category" className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Category</Label><Input id="category" className="mt-2" value={form.category} onChange={(event) => updateField("category", event.target.value)} placeholder="Study Tips" /></div><div><Label htmlFor="mainIp" className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Main IP</Label><Input id="mainIp" className="mt-2" value={form.mainIp} onChange={(event) => updateField("mainIp", event.target.value)} placeholder="Rakumon Owl" /></div><div><Label htmlFor="audience" className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Target Audience</Label><Input id="audience" className="mt-2" value={form.targetAudience} onChange={(event) => updateField("targetAudience", event.target.value)} placeholder="生徒 / 保護者 / 塾長" /></div><div><Label htmlFor="status" className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Status</Label><select id="status" className="mt-2 flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500" value={form.status} onChange={(event) => updateField("status", event.target.value as PostStatus)}>{statusOptions.map((status) => <option key={status}>{status}</option>)}</select></div><div className="md:col-span-2"><Label htmlFor="objective" className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Objective</Label><Input id="objective" className="mt-2" value={form.objective} onChange={(event) => updateField("objective", event.target.value)} placeholder="投稿で達成したいこと" /></div></div><div className="mt-3 flex flex-wrap gap-2"><Button onClick={generateContent}><Icon>✨</Icon> Generate</Button><Button variant="secondary" onClick={saveDraft}><Icon>💾</Icon> Save Draft</Button></div></div><div className="overflow-hidden rounded-[1.5rem] bg-gradient-to-br from-slate-950 via-slate-800 to-emerald-900 p-6 text-white"><div className="mb-16 flex items-center justify-between"><Badge className="bg-white/15 text-white">{form.platform || "SNS"} Review</Badge><RakumonLogo className="h-10 w-10" /></div><h2 className="max-w-md text-4xl font-bold leading-tight">{generated.imageTitle || "Generateで画像タイトルを作成"}</h2><p className="mt-4 text-white/72">{generated.imageSubtitle || "テーマを入力して投稿案を生成しましょう"}</p></div></CardContent></Card>
 
-          <Card><CardHeader><CardTitle>Generated Output</CardTitle><CardDescription>Themeをもとに作成した投稿モック。</CardDescription></CardHeader><CardContent className="grid gap-4"><div><Label>Image Title</Label><Input className="mt-2" value={generated.imageTitle} onChange={(event) => setGenerated((current) => ({ ...current, imageTitle: event.target.value }))} /></div><div><Label>Image Subtitle</Label><Input className="mt-2" value={generated.imageSubtitle} onChange={(event) => setGenerated((current) => ({ ...current, imageSubtitle: event.target.value }))} /></div><div><Label>Instagram Caption</Label><Textarea className="mt-2 min-h-36" value={generated.instagramCaption} onChange={(event) => setGenerated((current) => ({ ...current, instagramCaption: event.target.value }))} /></div><div><Label>X Post</Label><Textarea className="mt-2" value={generated.xPost} onChange={(event) => setGenerated((current) => ({ ...current, xPost: event.target.value }))} /></div><div><Label>Hashtags</Label><Input className="mt-2" value={generated.hashtags} onChange={(event) => setGenerated((current) => ({ ...current, hashtags: event.target.value }))} /></div></CardContent></Card>
+          <Card><CardHeader><CardTitle>Generated Output</CardTitle><CardDescription>生成後も保存前にすべて編集できます。</CardDescription></CardHeader><CardContent className="grid gap-4"><div><Label>Image Title</Label><Input className="mt-2" value={generated.imageTitle} onChange={(event) => setGenerated((current) => ({ ...current, imageTitle: event.target.value }))} /></div><div><Label>Image Subtitle</Label><Input className="mt-2" value={generated.imageSubtitle} onChange={(event) => setGenerated((current) => ({ ...current, imageSubtitle: event.target.value }))} /></div><div><Label>Instagram Caption</Label><Textarea className="mt-2 min-h-36" value={generated.instagramCaption} onChange={(event) => setGenerated((current) => ({ ...current, instagramCaption: event.target.value }))} /></div><div><Label>X Post</Label><Textarea className="mt-2" value={generated.xPost} onChange={(event) => setGenerated((current) => ({ ...current, xPost: event.target.value }))} /></div><div><Label>Hashtags</Label><Input className="mt-2" value={generated.hashtags} onChange={(event) => setGenerated((current) => ({ ...current, hashtags: event.target.value }))} /></div><div><Label>Image Prompt</Label><Textarea className="mt-2" value={generated.imagePrompt} onChange={(event) => setGenerated((current) => ({ ...current, imagePrompt: event.target.value }))} /></div><div><Label>Recommended IP Action</Label><Textarea className="mt-2" value={generated.recommendedIpAction} onChange={(event) => setGenerated((current) => ({ ...current, recommendedIpAction: event.target.value }))} /></div></CardContent></Card>
+
+          <Card><CardHeader><CardTitle>Content Archive</CardTitle><CardDescription>保存したレコードをクリックするとエディターに戻せます。</CardDescription></CardHeader><CardContent><div className="mb-4 flex flex-wrap gap-2">{(["This Week", "This Month", "All"] as DateFilter[]).map((filter) => <Button key={filter} variant={activeFilter === filter ? "default" : "secondary"} onClick={() => { setActiveFilter(filter); setStatusMessage(`${filter} records shown`); }}>{filter}</Button>)}</div><div className="overflow-x-auto rounded-2xl border border-slate-200"><table className="min-w-full divide-y divide-slate-200 text-sm"><thead className="bg-slate-50 text-left text-xs font-bold uppercase tracking-[0.12em] text-slate-500"><tr><th className="px-3 py-3">Post Date</th><th className="px-3 py-3">Platform</th><th className="px-3 py-3">Category</th><th className="px-3 py-3">Theme</th><th className="px-3 py-3">Title</th><th className="px-3 py-3">Main IP</th><th className="px-3 py-3">Audience</th><th className="px-3 py-3">Objective</th><th className="px-3 py-3">Status</th></tr></thead><tbody className="divide-y divide-slate-100 bg-white">{filteredRecords.length === 0 ? <tr><td className="px-3 py-6 text-center text-slate-500" colSpan={9}>No saved records for this filter yet.</td></tr> : filteredRecords.map((record) => <tr key={record.id} onClick={() => loadRecord(record)} className="cursor-pointer transition hover:bg-emerald-50/60"><td className="whitespace-nowrap px-3 py-3 font-semibold text-slate-700">{record.postDate}</td><td className="px-3 py-3">{record.platform}</td><td className="px-3 py-3">{record.category}</td><td className="min-w-44 px-3 py-3 font-semibold text-slate-900">{record.theme || "Untitled theme"}</td><td className="min-w-48 px-3 py-3">{record.title}</td><td className="px-3 py-3">{record.mainIp}</td><td className="px-3 py-3">{record.targetAudience}</td><td className="min-w-52 px-3 py-3 text-slate-600">{record.objective}</td><td className="px-3 py-3"><Badge className="bg-emerald-50 text-emerald-700">{record.status}</Badge></td></tr>)}</tbody></table></div></CardContent></Card>
 
           <Card><CardHeader><CardTitle>Theme Library</CardTitle><CardDescription>繰り返し使えるSNSテーマをストック。</CardDescription></CardHeader><CardContent className="grid gap-3 md:grid-cols-2">{themeLibrary.map((theme) => <article key={theme.title} className="rounded-2xl border border-slate-200 bg-white p-4"><div className="flex items-start justify-between gap-3"><h3 className="font-semibold text-slate-950">{theme.title}</h3><Badge className="bg-emerald-50 text-emerald-700">{theme.platform}</Badge></div><p className="mt-2 text-sm leading-6 text-slate-600">{theme.idea}</p><p className="mt-3 text-xs font-semibold text-slate-400">{theme.format} · {theme.audience}</p></article>)}</CardContent></Card>
         </section>
 
         <aside className="space-y-5">
-          <Card><CardHeader><CardTitle>Kanban</CardTitle><CardDescription>企画から投稿完了までを軽く動かせる一覧に。</CardDescription></CardHeader><CardContent className="grid gap-3">{kanbanColumns.map((column) => {
-              const items = column.title === "Drafts"
-                ? [...savedDrafts.map((draft) => ({ title: draft.theme || "Untitled post", meta: `${draft.category || "No category"} · ${draft.audience || "No audience"} · Saved ${draft.savedAt}` })), ...column.items]
-                : column.items;
-
-              return <div key={column.title} className="rounded-3xl bg-slate-100/70 p-3"><div className="mb-3 flex items-center justify-between"><h3 className="font-bold text-slate-800">{column.title}</h3><Badge className="bg-white text-slate-600">{items.length}</Badge></div><div className="space-y-2">{items.map((item) => <div key={`${item.title}-${item.meta}`} className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm"><p className="text-sm font-semibold text-slate-900">{item.title}</p><p className="mt-1 text-xs text-slate-500">{item.meta}</p></div>)}</div></div>;
+          <Card><CardHeader><CardTitle>Archive Snapshot</CardTitle><CardDescription>ステータス別に保存済み投稿を確認。</CardDescription></CardHeader><CardContent className="grid gap-3">{statusOptions.map((status) => {
+              const items = records.filter((record) => record.status === status);
+              return <div key={status} className="rounded-3xl bg-slate-100/70 p-3"><div className="mb-3 flex items-center justify-between"><h3 className="font-bold text-slate-800">{status}</h3><Badge className="bg-white text-slate-600">{items.length}</Badge></div><div className="space-y-2">{items.slice(0, 4).map((item) => <button key={item.id} type="button" onClick={() => loadRecord(item)} className="block w-full rounded-2xl border border-slate-200 bg-white p-3 text-left shadow-sm transition hover:border-emerald-200 hover:bg-emerald-50"><p className="text-sm font-semibold text-slate-900">{item.theme || item.title}</p><p className="mt-1 text-xs text-slate-500">{item.platform} · {item.postDate}</p></button>)}{items.length === 0 && <p className="rounded-2xl bg-white p-3 text-xs text-slate-500">No records yet</p>}</div></div>;
             })}</CardContent></Card>
           <Card><CardHeader><CardTitle className="flex items-center gap-2"><Icon>🗓️</Icon> Weekly Rhythm</CardTitle></CardHeader><CardContent><div className="grid grid-cols-7 gap-2">{weekPlan.map((day, index) => <div key={day} className="min-h-24 rounded-2xl border border-slate-200 bg-white p-2"><p className="text-xs font-bold text-slate-400">{["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][index]}</p><div className="mt-3 rounded-xl bg-emerald-50 p-2 text-[11px] font-semibold text-emerald-800">{day}</div></div>)}</div></CardContent></Card>
         </aside>
