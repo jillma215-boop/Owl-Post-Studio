@@ -3,7 +3,12 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Rakumon SNS Studio",
-  description: "AI-powered SNS content generation and management for Rakumon marketing operations."
+  description: "AI-powered SNS content generation and management for Rakumon marketing operations.",
+  icons: {
+    icon: "/favicon.svg",
+    shortcut: "/favicon.svg",
+    apple: "/apple-icon.svg"
+  }
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

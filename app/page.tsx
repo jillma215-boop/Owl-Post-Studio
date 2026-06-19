@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { RakumonOwlLogo } from "@/components/rakumon-owl-logo";
 
 
 function Icon({ children }: { children: string }) { return <span aria-hidden="true" className="inline-flex text-base leading-none">{children}</span>; }
@@ -41,7 +42,7 @@ function SelectLike({ label, values }: { label: string; values: string[] }) {
 export default function Home() {
   return <main className="mx-auto min-h-screen max-w-[1600px] px-5 py-6 lg:px-8">
     <header className="mb-6 flex flex-col gap-4 rounded-[2rem] border border-white/70 bg-white/70 p-5 shadow-soft backdrop-blur-xl md:flex-row md:items-center md:justify-between">
-      <div className="flex items-center gap-4"><div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-950 text-white"><Icon>🦉</Icon></div><div><Badge className="bg-teal-50 text-teal-700">Rakumon Marketing Operations</Badge><h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">Rakumon SNS Studio</h1><p className="text-sm text-slate-500">AI-powered SNS content generation and management platform.</p></div></div>
+      <div className="flex items-center gap-4"><RakumonOwlLogo /><div><Badge className="bg-teal-50 text-teal-700">Rakumon Marketing Operations</Badge><h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">Rakumon SNS Studio</h1><p className="text-sm text-slate-500">AI-powered SNS content generation and management platform.</p></div></div>
       <div className="flex gap-3"><Button variant="secondary"><Icon>📊</Icon> Analytics</Button><Button><Icon>✨</Icon> Generate Content</Button></div>
     </header>
 
