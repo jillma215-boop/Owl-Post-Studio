@@ -1,31 +1,29 @@
 export function RakumonOwlLogo({ className = "h-14 w-14" }: { className?: string }) {
   return (
     <svg
-      aria-label="Rakumon Teacher Owl brand icon"
+      aria-label="Rakumon owl brand mark"
       className={className}
       role="img"
       viewBox="0 0 128 128"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <rect width="128" height="128" rx="30" fill="#071226" />
-      <path
-        d="M31 63c0-25 15-42 33-42s33 17 33 42v23c0 20-14 31-33 31S31 106 31 86V63Z"
-        fill="#7C3AED"
-      />
-      <path d="M39 50c2-15 11-25 25-25s23 10 25 25c-7-7-16-10-25-10S46 43 39 50Z" fill="#A78BFA" opacity=".62" />
-      <path d="M42 80c0-14 9-24 22-24s22 10 22 24v17c-6 9-14 14-22 14s-16-5-22-14V80Z" fill="#F8FAFC" />
-      <path d="M64 62l-8 10h16l-8-10Z" fill="#F59E0B" />
-      <path d="M50 78c3 5 7 8 14 8s11-3 14-8" fill="none" stroke="#351069" strokeLinecap="round" strokeWidth="4" />
-      <circle cx="49" cy="59" r="13" fill="#EEF2FF" stroke="#1E1B4B" strokeWidth="5" />
-      <circle cx="79" cy="59" r="13" fill="#EEF2FF" stroke="#1E1B4B" strokeWidth="5" />
-      <path d="M62 59h4" stroke="#1E1B4B" strokeLinecap="round" strokeWidth="5" />
-      <circle cx="49" cy="59" r="5" fill="#111827" />
-      <circle cx="79" cy="59" r="5" fill="#111827" />
-      <circle cx="47" cy="57" r="2" fill="#FFFFFF" />
-      <circle cx="77" cy="57" r="2" fill="#FFFFFF" />
-      <path d="M30 72c-8 5-10 16-6 25 7-2 13-8 15-16" fill="#6D28D9" />
-      <path d="M98 72c8 5 10 16 6 25-7-2-13-8-15-16" fill="#6D28D9" />
-      <path d="M51 104h26" stroke="#DDD6FE" strokeLinecap="round" strokeWidth="5" />
+      <rect width="128" height="128" rx="28" fill="#FFFFFF" />
+      <g fill="#38D282">
+        <path d="M33.5 60.2c-10.7 5.5-16.1 14.8-15 25.3 7.8-1.1 14-4.6 18.6-10.4-3.2 7.5-10.4 12.6-20 14.7 4.6 7.9 12.3 12.1 22 12.3-2.6 2.8-6.9 4.7-12.8 5.5 7.2 6.7 17.8 7.5 29 2.1 11.2 8.4 30.9 6.4 45.4-8.7 15.8-16.4 18.2-40 5.7-55.7-4.9-6.2-11.8-10.9-20-13.5l-5.9 10.8c-4.1-2.1-9.7-3.4-15.9-3.4-6.7 0-12.6 1.5-16.8 3.9l-6.5-11.8c-8.7 7.1-11.7 17.4-7.8 28.9Z" />
+        <path d="M36.7 21.7c9.6 6 19.6 8.9 29.9 8.7 11.8-.2 22.9-4.5 33.2-12.9 1.3-1 3 .4 2.2 1.8L89.9 39.8c-6-6.7-14.8-10.8-24.6-10.8-9.3 0-17.7 3.7-23.7 9.8L34.7 23.5c-.6-1.4.8-2.6 2-1.8Z" />
+      </g>
+      <g fill="#FFFFFF">
+        <circle cx="52" cy="59" r="24" />
+        <circle cx="80" cy="59" r="24" />
+        <path d="M66 70.5 56.5 60h19L66 70.5Z" />
+      </g>
+      <g fill="#38D282">
+        <circle cx="52" cy="59" r="16" />
+        <circle cx="80" cy="59" r="16" />
+        <circle cx="52" cy="59" r="7" fill="#FFFFFF" />
+        <circle cx="80" cy="59" r="7" fill="#FFFFFF" />
+        <path d="M108 36.5a4 4 0 1 1 6.9-4l1.7 2.9a4 4 0 0 1-4.3 5.9L100 94.6a3.4 3.4 0 0 1-6.6-1.5l12.3-53.2a4 4 0 0 1 2.3-3.4Z" />
+      </g>
     </svg>
   );
 }

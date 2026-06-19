@@ -18,12 +18,12 @@ const settings = {
 
 const generated = [
   ["Image Title", "今日の小さな積み上げが、春の合格をつくる"],
-  ["Image Subtitle", "Rakuと一緒に、5分だけ机に向かう習慣づくり"],
+  ["Image Subtitle", "5分だけ机に向かう習慣づくり"],
   ["Instagram Caption", "勉強の最初の一歩は、完璧な計画ではなく“今日も始めた”という事実。Rakumonは生徒の小さな達成を見逃さず、次の行動へつなげます。"],
   ["X Post", "合格に近づく生徒ほど、派手な努力より“続けられる仕組み”を持っています。今日の5分を一緒に設計しましょう。#Rakumon"],
   ["Hashtags", "#受験勉強 #学習習慣 #塾運営 #教育DX #Rakumon"],
-  ["Image Generation Prompt", "Clean Japanese education SaaS visual, friendly owl mascot Raku, warm desk light, notebooks, soft mint and ivory palette, Apple-like minimal composition"],
-  ["Recommended IP Action", "Rakuがノート横でタイマーを持ち、生徒の一歩を応援するポーズ"]
+  ["Image Generation Prompt", "Clean Japanese education SaaS visual, warm desk light, notebooks, soft mint and ivory palette, Apple-like minimal composition"],
+  ["Recommended IP Action", "ブランドマークは公式Rakumon owlのみを使用し、投稿ビジュアルは教材・ノート・タイマー中心で構成"]
 ];
 
 const rows = [
@@ -49,7 +49,7 @@ export default function Home() {
     <section className="grid gap-5 xl:grid-cols-[340px_minmax(460px,1fr)_420px]">
       <Card className="xl:sticky xl:top-6 xl:h-[calc(100vh-8rem)] xl:overflow-auto"><CardHeader><CardTitle>Content Settings</CardTitle><CardDescription>投稿の文脈を選び、Rakumonらしい表現へ調整します。</CardDescription></CardHeader><CardContent className="space-y-4">{Object.entries(settings).map(([label, values]) => <SelectLike key={label} label={label} values={values} />)}<div className="space-y-2"><Label className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Theme Input</Label><Textarea placeholder="例：定期テスト前に学習計画を立てられない生徒への励まし" defaultValue="定期テスト前、なかなか机に向かえない生徒へ。小さな開始ハードルを下げる投稿。" /></div><Button className="w-full"><Icon>✍️</Icon> AI Draftを作成</Button></CardContent></Card>
 
-      <Card><CardHeader className="flex-row items-start justify-between gap-4"><div><CardTitle>Generated Content</CardTitle><CardDescription>画像・キャプション・投稿文・生成プロンプトを一括生成。</CardDescription></div><Badge className="bg-amber-50 text-amber-700">Mock AI Output</Badge></CardHeader><CardContent className="space-y-4"><div className="overflow-hidden rounded-[1.5rem] bg-gradient-to-br from-slate-950 via-slate-800 to-teal-900 p-6 text-white"><div className="mb-16 flex items-center justify-between"><Badge className="bg-white/15 text-white">Instagram Carousel</Badge><Icon>🎨</Icon></div><h2 className="max-w-md text-4xl font-bold leading-tight">今日の小さな積み上げが、春の合格をつくる</h2><p className="mt-4 text-white/72">Rakuと一緒に、5分だけ机に向かう習慣づくり</p></div>{generated.map(([label, value]) => <div key={label} className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4"><div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-slate-500"><Icon>✨</Icon>{label}</div><p className="text-sm leading-6 text-slate-800">{value}</p></div>)}</CardContent></Card>
+      <Card><CardHeader className="flex-row items-start justify-between gap-4"><div><CardTitle>Generated Content</CardTitle><CardDescription>画像・キャプション・投稿文・生成プロンプトを一括生成。</CardDescription></div><Badge className="bg-amber-50 text-amber-700">Mock AI Output</Badge></CardHeader><CardContent className="space-y-4"><div className="overflow-hidden rounded-[1.5rem] bg-gradient-to-br from-slate-950 via-slate-800 to-teal-900 p-6 text-white"><div className="mb-16 flex items-center justify-between"><Badge className="bg-white/15 text-white">Instagram Carousel</Badge><Icon>🎨</Icon></div><h2 className="max-w-md text-4xl font-bold leading-tight">今日の小さな積み上げが、春の合格をつくる</h2><p className="mt-4 text-white/72">5分だけ机に向かう習慣づくり</p></div>{generated.map(([label, value]) => <div key={label} className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4"><div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-slate-500"><Icon>✨</Icon>{label}</div><p className="text-sm leading-6 text-slate-800">{value}</p></div>)}</CardContent></Card>
 
       <div className="space-y-5"><Card><CardHeader><CardTitle>Content Management</CardTitle><CardDescription>企画から投稿完了までの進行を管理します。</CardDescription></CardHeader><CardContent><div className="space-y-3">{rows.map((row) => <div key={row.title} className="rounded-2xl border border-slate-200 bg-white p-4"><div className="flex items-start justify-between gap-3"><div><p className="font-semibold text-slate-900">{row.title}</p><p className="mt-1 text-xs text-slate-500">{row.platform} · {row.ip} · {row.date}</p></div><Badge className="bg-slate-950 text-white">{row.status}</Badge></div></div>)}</div></CardContent></Card>
 
