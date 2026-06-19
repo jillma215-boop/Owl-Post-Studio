@@ -14,6 +14,7 @@ function Icon({ children }: { children: string }) {
 }
 
 const draftStorageKey = "rakumon-sns-studio-daily-draft";
+const draftsStorageKey = "rakumon-sns-studio-saved-drafts";
 
 type DraftForm = {
   theme: string;
@@ -31,7 +32,7 @@ type GeneratedContent = {
   hashtags: string;
 };
 
-type SavedDraft = DraftForm & { generated: GeneratedContent };
+type SavedDraft = DraftForm & { generated: GeneratedContent; savedAt: string };
 
 const emptyGenerated: GeneratedContent = {
   imageTitle: "",
@@ -42,6 +43,7 @@ const emptyGenerated: GeneratedContent = {
 };
 
 const defaultDraft: SavedDraft = {
+  savedAt: "",
   theme: "定期テスト前の5分スタート",
   category: "Study Tips",
   audience: "生徒",
@@ -103,23 +105,37 @@ export default function Home() {
   const [form, setForm] = useState<DraftForm>({ theme: defaultDraft.theme, category: defaultDraft.category, audience: defaultDraft.audience, objective: defaultDraft.objective, draft: defaultDraft.draft });
   const [generated, setGenerated] = useState<GeneratedContent>(defaultDraft.generated);
   const [savedAt, setSavedAt] = useState("");
+  const [savedDrafts, setSavedDrafts] = useState<SavedDraft[]>([]);
+  const [statusMessage, setStatusMessage] = useState("");
 
   useEffect(() => {
     const savedDraft = window.localStorage.getItem(draftStorageKey);
-    if (!savedDraft) return;
+    if (savedDraft) {
+      try {
+        const parsed = JSON.parse(savedDraft) as Partial<SavedDraft>;
+        setForm({
+          theme: parsed.theme ?? defaultDraft.theme,
+          category: parsed.category ?? defaultDraft.category,
+          audience: parsed.audience ?? defaultDraft.audience,
+          objective: parsed.objective ?? defaultDraft.objective,
+          draft: parsed.draft ?? defaultDraft.draft
+        });
+        setGenerated(parsed.generated ?? defaultDraft.generated);
+      } catch {
+        setForm((current) => ({ ...current, draft: savedDraft }));
+      }
+    }
+
+    const savedDraftList = window.localStorage.getItem(draftsStorageKey);
+    if (!savedDraftList) return;
 
     try {
-      const parsed = JSON.parse(savedDraft) as Partial<SavedDraft>;
-      setForm({
-        theme: parsed.theme ?? defaultDraft.theme,
-        category: parsed.category ?? defaultDraft.category,
-        audience: parsed.audience ?? defaultDraft.audience,
-        objective: parsed.objective ?? defaultDraft.objective,
-        draft: parsed.draft ?? defaultDraft.draft
-      });
-      setGenerated(parsed.generated ?? defaultDraft.generated);
+      const parsedDrafts = JSON.parse(savedDraftList) as SavedDraft[];
+      if (Array.isArray(parsedDrafts)) {
+        setSavedDrafts(parsedDrafts);
+      }
     } catch {
-      setForm((current) => ({ ...current, draft: savedDraft }));
+      setSavedDrafts([]);
     }
   }, []);
 
@@ -143,15 +159,29 @@ export default function Home() {
     setForm(nextForm);
     setGenerated(generateMockContent(nextForm));
     setSavedAt("");
+    setStatusMessage("Template selected");
   }
 
   function generateContent() {
     setGenerated(generateMockContent(form));
+    setStatusMessage("Content generated");
   }
 
   function saveDraft() {
-    window.localStorage.setItem(draftStorageKey, JSON.stringify({ ...form, generated }));
-    setSavedAt(new Intl.DateTimeFormat("ja-JP", { hour: "2-digit", minute: "2-digit" }).format(new Date()));
+    const timestamp = new Intl.DateTimeFormat("ja-JP", {
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit"
+    }).format(new Date());
+    const nextDraft: SavedDraft = { ...form, generated, savedAt: timestamp };
+    const nextDrafts = [nextDraft, ...savedDrafts];
+
+    window.localStorage.setItem(draftStorageKey, JSON.stringify(nextDraft));
+    window.localStorage.setItem(draftsStorageKey, JSON.stringify(nextDrafts));
+    setSavedDrafts(nextDrafts);
+    setSavedAt(timestamp);
+    setStatusMessage("Draft saved");
   }
 
   function startNewPost() {
@@ -159,6 +189,7 @@ export default function Home() {
     setGenerated(emptyGenerated);
     setSavedAt("");
     window.localStorage.removeItem(draftStorageKey);
+    setStatusMessage("New post started");
   }
 
   return (
@@ -175,6 +206,8 @@ export default function Home() {
         <div className="flex gap-3"><Button variant="secondary" onClick={saveDraft}><Icon>💾</Icon> Save Draft</Button><Button onClick={startNewPost}><Icon>✍️</Icon> New Post</Button></div>
       </header>
 
+      {statusMessage && <div role="status" aria-live="polite" className="mb-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800 shadow-sm">{statusMessage}</div>}
+
       <section className="grid gap-5 xl:grid-cols-[310px_minmax(460px,1fr)_380px]">
         <aside className="space-y-5 xl:sticky xl:top-6 xl:h-[calc(100vh-8rem)] xl:overflow-auto">
           <Card><CardHeader><CardTitle>Quick Templates</CardTitle><CardDescription>今日の投稿タイプを選んで書き始めます。</CardDescription></CardHeader><CardContent className="grid gap-2">{quickTemplates.map((template) => <button key={template.name} type="button" onClick={() => useTemplate(template)} className="rounded-2xl border border-slate-200 bg-white p-3 text-left transition hover:border-emerald-200 hover:bg-emerald-50/50 focus:outline-none focus:ring-4 focus:ring-emerald-100"><div className="flex items-center justify-between gap-2"><span className="font-semibold text-slate-900">{template.name}</span><Badge className="bg-slate-100 text-slate-600">{template.tone}</Badge></div><p className="mt-2 text-xs leading-5 text-slate-500">{template.prompt}</p></button>)}</CardContent></Card>
@@ -190,7 +223,13 @@ export default function Home() {
         </section>
 
         <aside className="space-y-5">
-          <Card><CardHeader><CardTitle>Kanban</CardTitle><CardDescription>企画から投稿完了までを軽く動かせる一覧に。</CardDescription></CardHeader><CardContent className="grid gap-3">{kanbanColumns.map((column) => <div key={column.title} className="rounded-3xl bg-slate-100/70 p-3"><div className="mb-3 flex items-center justify-between"><h3 className="font-bold text-slate-800">{column.title}</h3><Badge className="bg-white text-slate-600">{column.items.length}</Badge></div><div className="space-y-2">{column.items.map((item) => <div key={item.title} className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm"><p className="text-sm font-semibold text-slate-900">{item.title}</p><p className="mt-1 text-xs text-slate-500">{item.meta}</p></div>)}</div></div>)}</CardContent></Card>
+          <Card><CardHeader><CardTitle>Kanban</CardTitle><CardDescription>企画から投稿完了までを軽く動かせる一覧に。</CardDescription></CardHeader><CardContent className="grid gap-3">{kanbanColumns.map((column) => {
+              const items = column.title === "Drafts"
+                ? [...savedDrafts.map((draft) => ({ title: draft.theme || "Untitled post", meta: `${draft.category || "No category"} · ${draft.audience || "No audience"} · Saved ${draft.savedAt}` })), ...column.items]
+                : column.items;
+
+              return <div key={column.title} className="rounded-3xl bg-slate-100/70 p-3"><div className="mb-3 flex items-center justify-between"><h3 className="font-bold text-slate-800">{column.title}</h3><Badge className="bg-white text-slate-600">{items.length}</Badge></div><div className="space-y-2">{items.map((item) => <div key={`${item.title}-${item.meta}`} className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm"><p className="text-sm font-semibold text-slate-900">{item.title}</p><p className="mt-1 text-xs text-slate-500">{item.meta}</p></div>)}</div></div>;
+            })}</CardContent></Card>
           <Card><CardHeader><CardTitle className="flex items-center gap-2"><Icon>🗓️</Icon> Weekly Rhythm</CardTitle></CardHeader><CardContent><div className="grid grid-cols-7 gap-2">{weekPlan.map((day, index) => <div key={day} className="min-h-24 rounded-2xl border border-slate-200 bg-white p-2"><p className="text-xs font-bold text-slate-400">{["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][index]}</p><div className="mt-3 rounded-xl bg-emerald-50 p-2 text-[11px] font-semibold text-emerald-800">{day}</div></div>)}</div></CardContent></Card>
         </aside>
       </section>
